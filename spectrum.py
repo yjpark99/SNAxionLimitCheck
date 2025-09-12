@@ -173,69 +173,6 @@ def load_pion(LD_dir, pion_condensate = True, Eoutput = False):
         return Ebin, spectra_sorted
     else:
         return spectra_sorted
-
-
-
-def load_effA(LD_dir):
-    with fits.open(LD_dir + 'exp.fits') as f:
-        tstart = f[0].header['TSTART']
-        tstop = f[0].header['TSTOP']
-        
-        Ebins = f[2].data['energy'] / 1e3 # units of GeV
-        expmap = np.zeros(len(Ebins))
-        
-        for ei in range(len(expmap)):
-            expmap[ei] = np.amax(f[1].data['energy' + str(ei + 1)] / (tstop - tstart)) # units of cm^2
-            
-    return Ebins, expmap
-
-
-
-def load_bkg(ell, b, distance, effA_dir, mission_dir):
-    coord = SkyCoord(l = ell * u.deg, b = b * u.deg, frame = 'galactic')
-    
-    with fits.open(mission_dir + 'counts.fits') as f:
-        emin = f[2].data['E_MIN'] / 1e6
-        emax = f[2].data['E_MAX'] / 1e6
-        nside = f[1].header['nside']
-        
-        skymap = np.zeros((len(emin), hp.nside2npix(nside)))
-        for ei in range(len(emin)):
-            skymap[ei] = f[1].data['CHANNEL' + str(ei + 1)]
-            
-    counts = np.zeros(len(emin))
-    mask = cm.make_ring_mask(0, 5, coord.b.value, coord.l.value, nside)
-    
-    for ci in range(len(counts)):
-        mask_map = hp.ma(skymap[ci])
-        mask_map.mask = mask
-        counts[ci] = np.sum(mask_map.compressed())
-        
-    mission_amax = []
-        
-    with fits.open(mission_dir + 'exp.fits') as f:
-        exp_E = f[2].data['ENERGY']
-        dt = f[0].header['TSTOP'] - f[0].header['TSTART']
-        for ei in range(len(exp_E)):
-            expmap = hp.ma(f[1].data['ENERGY' + str(ei + 1)])
-            expmap.mask = mask
-            mission_amax.append(np.argmax(expmap))
-            
-        mission_amax = np.unique(mission_amax)
-        missionA = np.zeros(len(exp_E) - 1)
-        
-        for eii in range(len(exp_E) - 1):
-            expmap = np.mean((f[1].data['ENERGY' + str(eii + 1)], f[1].data['ENERGY' + str(eii + 2)]), axis = 0)
-            missionA[eii] = expmap[mission_amax[0]] / dt
-            
-        bkg_rate = counts / dt
-        
-        Ebins, max_effA = load_effA(effA_dir)
-        f_maxA = interp.interp1d(Ebins, max_effA, bounds_error = False, fill_value = 'extrapolate')
-        bkg_rate_rescale = bkg_rate * f_maxA((emin + emax) / 2) / np.mean(missionA, axis=0)
-        
-        return bkg_rate_rescale
-
     
 
 def calc_smm_spec(LD_dir, ma_array, smm_energy, convprob):
