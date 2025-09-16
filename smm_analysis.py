@@ -88,16 +88,24 @@ class model:
         
         t_array = self.data_time
         t_nu = self.t_nu
+
+        t_edges = np.zeros(len(t_array) + 1)
+        t_edges[1:-1] = (t_array[1:] + t_array[:-1]) / 2
+        t_edges[0] = t_array[0] - (t_array[1] - t_array[0]) / 2
+        t_edges[-1] = t_array[-1] + (t_array[-1] - t_array[-2]) / 2
+
+        bin_idx = np.searchsorted(t_edges, t_nu) - 1
+        upper_bin_idx = np.searchsorted(t_edges, t_nu + 10)
+        toi = np.where((np.arange(len(t_array)) <= upper_bin_idx) & (np.arange(len(t_array)) >= bin_idx))[0]
         
         model = np.zeros((3, len(t_array)))
-        toi = np.where((t_array < (t_nu + 10)) & (t_array > t_nu))[0]
         
         for ei in range(self.prim.shape[0]):
-            spec = 0
             
             for ti in range(len(toi) - 1):
-                start_T = t_array[toi[ti]] - t_nu
-                end_T = t_array[toi[ti + 1]] - t_nu
+                spec = 0
+                start_T = 0 if (t_edges[toi[ti]] - t_nu) < 0 else t_edges[toi[ti]] - t_nu
+                end_T = 10 if (t_edges[toi[ti + 1]] - t_nu) > 10 else t_edges[toi[ti + 1]] - t_nu
                 print(start_T, end_T)
                 
                 if self.prim_flag:
