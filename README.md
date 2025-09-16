@@ -8,4 +8,7 @@ In the notebook AxionSpectrum.ipynb, we compare the axion emission spectrum from
 
 In the notebook check_Fermi.ipynb, we make an independent check on the axion constraint projection of a Fermi-LAT-like telescope observing a future 10kpc BSG. We explicitly check the KSVZ-like axion case in 2405.19393, and reproduce the constraint shown in Fig. 1 of 2405.19393.
 
-`smm_analysis.py` now has a modified `sig_model` function under the `model` class. It now creates the time bin edges from the bin center given in the SMM data, and the function integrates between bin edges. The first and last bin in the 10s interval are included in the signal model regardless of whether the full bin is within the 10s interval of the axion emission time.
+`smm_analysis.py` now has a modified `sig_model` function under the `model` class.
+It now has proper counts in the individual time bins, without accumulating over the relevant time bins.
+Additionally, the time bin edges are calculated from the bin center given in the SMM data, and the function integrates between bin edges.
+The first and last bin in the 10s interval are included in the signal model regardless of whether the full bin is within the 10s interval of the axion emission time.
